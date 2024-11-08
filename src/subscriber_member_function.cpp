@@ -8,33 +8,31 @@
  * @copyright Copyright (c) 2024
  *
  */
+#include <functional>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 
+using std::placeholders::_1;
+
 /**
- * @brief Minimal Subscriber Node that listens to /topic and echoes it to
- * RCLCPP_INFO logging level
+ * @brief ROS2 Node to subscribe to a topic and print the message received
  *
  */
 class MinimalSubscriber : public rclcpp::Node {
  public:
   /**
-   * @brief Construct a new Minimal Subscriber object and instantiate the
-   * subscriber object for the /topic with the topic_callback
+   * @brief Construct a new Minimal Subscriber object
    *
    */
   MinimalSubscriber() : Node("minimal_subscriber") {
     subscription_ = this->create_subscription<std_msgs::msg::String>(
-        "topic", 10,
-        std::bind(&MinimalSubscriber::topic_callback, this,
-                  std::placeholders::_1));
+        "topic", 10, std::bind(&MinimalSubscriber::topic_callback, this, _1));
   }
 
  private:
   /**
-   * @brief /topic subscriber callback that echoes the message to RCLCPP_INFO
-   * logging level
+   * @brief Callback function to print the message received
    *
    * @param msg
    */
