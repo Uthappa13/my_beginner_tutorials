@@ -1,60 +1,52 @@
-# ROS 2 Programming Assignment 1 - Publisher/Subscriber
+# ROS2 Beginner Tutorials
 
-The 'beginner_tutorials' ROS package contains the code for a publisher and a subscriber node. 
+This branch contains a C++ package that can run a ROS2 publisher and subscriber communicating a custom message.
 
-First, move this directory to the `src/` folder of your colcon
-workspace.  This is desirable or you may get a lot of errors from
-`ament_lint_cmake`.
+### Dependencies
+The code dependes on the following ROS2 packages:  
+ - `ament_cmake`: Required for ROS2 build system integration.
+ - `rclcpp`: Used for creating nodes and communication between them.
+ - `std_msgs`: Provides standard message types used in ROS2.
 
-For example, your workspace directory structure should look like this:
+### Building the Code
 
-```
-colcon_ws/
-├── build/
-├── install/
-├── log/
-└── src/
-    ├── beginner_tutorials/
-    ├── ros_package1/
-    ├── ros_package2/
-    └── ros_package3/
-```
-
-``` bash
-$ mkdir -p ~/colcon_ws/src
-$ cd ~/colcon_ws/src
-$ git clone https://github.com/Uthappa13/my_beginner_tutorials.git
-```
-
-## How to Compile:
 ```bash
-$ cd ~/colcon_ws/   # assuming your workspace is at '~/colcon_ws'
-$ rm -rf install/ build/
-$ source /opt/ros/humble/setup.bash  # if needed
-$ colcon build 
+source /opt/ros/humble/setup.bash
+# Make your ros2 workspace
+mkdir -p ~/ros2_ws/src
+# Go to the source directory of your ros2 workspace
+cd ~/ros2_ws/src
+#Clone the repository
+git clone https://github.com/Uthappa13/my_beginner_tutorials.git
+#Go back to the ws directory
+cd ~/ros2_ws
+# Install rosdep dependencies before building the package
+rosdep install -i --from-path src --rosdistro humble -y
+# Build the package using colcon build
+colcon build --packages-select beginner_tutorials
+# After successfull build source the package
+source install/setup.bash
+
+# Run the publisher in terminal#1
+ros2 run beginner_tutorials talker
+# Run the subscriber in terminal#2 (Split the terminal and source ROS2 and the workspace setup.bash)
+ros2 run beginner_tutorials listener 
 ```
 
-## How to Run:
-First, soruce the setup file:
+### Launching the Pub and Sub Nodes
+
+In order to run the publisher and subscriber node together using a launch file, the following command can be run on the terminal. It accepts an argument `publish_frequency` whose value can be initialized by the user.
+
 ```bash
-$ source install/setup.bash
-```
-### then, run the publisher node
-```bash
-$ ros2 run beginner_tutorials talker
-```
-### open another terminal and run the subscriber node
-```bash
-$ ros2 run beginner_tutorials listener
+ros2 launch beginner_tutorials launch.py publish_frequency:=1000
 ```
 
-### Check style guidelines
+### Calling the Service
+
+A service has been added to the talker node that can change the output string of the talker based on user input. The service can be called using the following command:
+
 ```bash
-#In the package directory
-cd ~/ros_ws/src/beginner_tutorials
+ros2 service call /change_string beginner_tutorials/srv/ChangeStr "{new_string: My Custom Input}"
+```
 
-# clang-tidy
-$ clang-tidy -p ./ $( find . -name *.cpp | grep -v "/build/" ) > results/clang-tidy.txt
-
-# cpplint
-$ cpplint --filter=-build/c++11,+build/c++17,-build/namespaces,-build/include_order  src/*.cpp >  results/cpplint.txt
+### 
