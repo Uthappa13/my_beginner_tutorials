@@ -34,7 +34,7 @@ class PublisherandServiceNode : public rclcpp::Node {
    */
   PublisherandServiceNode() : Node("publisher_service_node") {
     this->declare_parameter("publish_frequency", 500);
-    this->message.data = "Use service to change this string";
+    this->message.data = "Default Message";
     publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
     service_ = this->create_service<beginner_tutorials::srv::ChangeStr>(
         "change_string",
