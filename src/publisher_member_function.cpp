@@ -105,11 +105,11 @@ class TalkerTransformPublisherNode : public rclcpp::Node {
     t.header.frame_id = "world";
     t.child_frame_id = "talk";
 
-    t.transform.translation.x = 0.1;
-    t.transform.translation.y = 0.1;
-    t.transform.translation.z = 0.1;
+    t.transform.translation.x = 0.2;
+    t.transform.translation.y = 0.4;
+    t.transform.translation.z = 0.6;
     tf2::Quaternion q;
-    q.setRPY(0.1, 0.1, 0.1);
+    q.setRPY(0.2, 0.4, 0.6);
     t.transform.rotation.x = q.x();
     t.transform.rotation.y = q.y();
     t.transform.rotation.z = q.z();
