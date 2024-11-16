@@ -1,39 +1,46 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, RegisterEventHandler
+from launch.actions import LogInfo
+from launch.substitutions import TextSubstitution
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
+from launch.conditions import IfCondition
 from launch_ros.actions import Node
-
+from launch.event_handlers import (OnExecutionComplete, OnProcessExit,
+                                OnProcessIO, OnProcessStart, OnShutdown)
+ 
 def generate_launch_description():
-    # Declare a launch argument to allow setting the publish frequency
-    publish_frequency_arg = DeclareLaunchArgument(
-        'publish_frequency',
-        default_value='500',
-        description='Frequency (in ms) at which the publisher publishes messages.'
+    ros2_bag_start = LaunchConfiguration('ros2_bag_start')
+    publisher_freq_launch_arg = DeclareLaunchArgument(
+        "publish_freq", default_value=TextSubstitution(text="500")
     )
-
-    # Configure the Talker (Publisher) node with the publish frequency parameter
+    ros2_bag_start_arg = DeclareLaunchArgument(
+        "ros2_bag_start", 
+        default_value='False'
+    )
     talker_node = Node(
-        package='beginner_tutorials',
-        executable='talker',
-        name='publisher_service_node',
-        parameters=[{
-            'publish_frequency': LaunchConfiguration('publish_frequency')
-        }],
-        output='screen',
-        arguments=['--ros-args', '--log-level', 'DEBUG']
+        package="beginner_tutorials",
+        executable="talker",
+        parameters=[{"publish_frequency": LaunchConfiguration('publish_freq')}]
     )
-
-    # Configure the Listener (Subscriber) node
-    listener_node = Node(
-        package='beginner_tutorials',
-        executable='listener',
-        name='minimal_subscriber',
+    run_ros2bag_conditioned = ExecuteProcess(
+        condition=IfCondition(
+            PythonExpression([
+                ros2_bag_start
+            ])
+        ),
+        cmd=['ros2', 'bag', 'record', '-o', 'rosbag', '-a'],
         output='screen'
     )
 
-    # Return the LaunchDescription with the nodes and argument
-    return LaunchDescription([
-        publish_frequency_arg,
-        talker_node,
-        listener_node
-    ])
+    bag_event_handler = RegisterEventHandler(
+            OnProcessStart(
+                target_action=talker_node,
+                on_start=[
+                    run_ros2bag_conditioned
+                ]
+            )
+        )
+
+    return LaunchDescription([publisher_freq_launch_arg, ros2_bag_start_arg, talker_node, bag_event_handler])
+

@@ -9,36 +9,41 @@
  *
  */
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/static_transform_broadcaster.h>
+
+#include <beginner_tutorials/srv/change_str.hpp>
+#include <chrono>
 #include <cstddef>
 #include <functional>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <memory>
-#include <string>
-
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-
-#include <beginner_tutorials/srv/change_str.hpp>
-
+#include <string>
 
 /**
- * @brief ROS2 Node that publishes a string message and acts a service to change
- * the message
+ * @brief PublisherandService node to act as a simple publisher and a service to
+ * change the published string. The publish rate is determined by a parameter
  *
  */
-class PublisherandServiceNode : public rclcpp::Node {
+
+class TalkerTransformPublisherNode : public rclcpp::Node {
  public:
   /**
-   * @brief Construct a new Node object and instantiate a publisher and service
+   * @brief Construct a new TalkerTransformPublisherNode Node object and
+   * instantiate the publisher, subscriber and the timer object that calls the
+   * publisher
    *
    */
-  PublisherandServiceNode() : Node("publisher_service_node") {
+  TalkerTransformPublisherNode() : Node("transform_publisher") {
     this->declare_parameter("publish_frequency", 500);
-    this->message.data = "Default Message";
+    this->message.data = "Defaut Message";
     publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
     service_ = this->create_service<beginner_tutorials::srv::ChangeStr>(
         "change_string",
-        std::bind(&PublisherandServiceNode::change_str, this,
+        std::bind(&TalkerTransformPublisherNode::change_str, this,
                   std::placeholders::_1, std::placeholders::_2));
     if (this->get_parameter("publish_frequency").as_int() == 500) {
       RCLCPP_WARN_STREAM(
@@ -46,63 +51,82 @@ class PublisherandServiceNode : public rclcpp::Node {
           "Publisher frequency has not changed, is still : "
               << this->get_parameter("publish_frequency").as_int());
     }
-
-    if (this->get_parameter("publish_frequency").as_int() > 5000) {
-      RCLCPP_FATAL_STREAM(
-          this->get_logger(),
-          "Publisher frequency is set very high and may cause issues!");
-      rclcpp::shutdown();
-      return;
-    }
-
+    tf_static_broadcaster_ =
+        std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(
             this->get_parameter("publish_frequency").as_int()),
-        std::bind(&PublisherandServiceNode::timer_callback, this));
+        std::bind(&TalkerTransformPublisherNode::timer_callback, this));
   }
 
  private:
   /**
-   * @brief Callback function for the timer to publish the message
+   * @brief Timer callback that publishes the message. Publish frequency is
+   * determined by the parameter.
    *
    */
   void timer_callback() {
+    if (this->get_parameter("publish_frequency").as_int() < 100) {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+          this->get_logger(), *this->get_clock(), 100,
+          "Publishing too fast, change publish_frequency parameter");
+    } else if (this->get_parameter("publish_frequency").as_int() > 1000) {
+      RCLCPP_FATAL_STREAM(
+          this->get_logger(),
+          "Too slow, FATAL, have to change publish_frequency parameter");
+    }
     auto message = this->message;
-    RCLCPP_INFO_STREAM(this->get_logger(), "Publishing : " << message.data);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Publishing:" << message.data);
     publisher_->publish(message);
+    this->publish_talk_transform();
   }
-
   /**
-   * @brief Callback function for the service to change the message
+   * @brief Change string callback from the service, changes the string being
+   * published
    *
-   * @param request Request message containing the new string
-   * @param resp Response message containing the status of the change
+   * @param request Input string that changes the published string
+   * @param resp The same string is echoed back when the string is set
+   * successfully
    */
   void change_str(
       const std::shared_ptr<beginner_tutorials::srv::ChangeStr::Request>
           request,
       std::shared_ptr<beginner_tutorials::srv::ChangeStr::Response> resp) {
-    if (request->new_string.empty()) {
-      RCLCPP_ERROR_STREAM(this->get_logger(),
-                          "Received empty string! Cannot update message.");
-      resp->string_change_status =
-          "Failed to change string: Received empty string.";
-    } else {
-      this->message.data = request->new_string;
-      resp->string_change_status = request->new_string;
-      RCLCPP_DEBUG_STREAM(this->get_logger(),
-                          "Received Service Request : " << request->new_string);
-    }
+    this->message.data = request->new_string;
+    resp->string_change_status = request->new_string;
+    RCLCPP_DEBUG_STREAM(this->get_logger(),
+                        "Received Service Request: " << request->new_string);
+  }
+
+  void publish_talk_transform() {
+    geometry_msgs::msg::TransformStamped t;
+
+    t.header.stamp = this->get_clock()->now();
+    t.header.frame_id = "world";
+    t.child_frame_id = "talk";
+
+    t.transform.translation.x = 0.2;
+    t.transform.translation.y = 0.4;
+    t.transform.translation.z = 0.6;
+    tf2::Quaternion q;
+    q.setRPY(0.2, 0.4, 0.6);
+    t.transform.rotation.x = q.x();
+    t.transform.rotation.y = q.y();
+    t.transform.rotation.z = q.z();
+    t.transform.rotation.w = q.w();
+
+    tf_static_broadcaster_->sendTransform(t);
   }
   std_msgs::msg::String message;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
   rclcpp::Service<beginner_tutorials::srv::ChangeStr>::SharedPtr service_;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_static_broadcaster_;
 };
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PublisherandServiceNode>());
+  rclcpp::spin(std::make_shared<TalkerTransformPublisherNode>());
   rclcpp::shutdown();
   return 0;
 }
