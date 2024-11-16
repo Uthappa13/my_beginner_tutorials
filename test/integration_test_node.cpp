@@ -1,6 +1,6 @@
 /**
  * @file publisher_member_function.cpp
- * @author Uthappa Madettira (120305085)
+ * @author Uthappa Madettira
  * @brief
  * @version 0.1
  * @date 2024-11-06
@@ -22,7 +22,7 @@ using std_msgs::msg::String;
 ////////////////////////////////////////////////
 // Define Fixture
 ////////////////////////////////////////////////
-auto Logger = rclcpp::get_logger("");  // create an initial Logger
+auto Logger = rclcpp::get_logger("");  // Create an initial Logger
 
 class MyTestsFixture {
  public:
@@ -33,7 +33,7 @@ class MyTestsFixture {
     testerNode = rclcpp::Node::make_shared("IntegrationTestNode1");
     Logger =
         testerNode
-            ->get_logger();  // make sure message will appear in rqt_console
+            ->get_logger();  // Make sure message will appear in rqt_console
 
     /**
      * 2.) Declare a parameter for the duration of the test:
@@ -46,7 +46,7 @@ class MyTestsFixture {
     TEST_DURATION = testerNode->get_parameter("test_duration")
                         .get_parameter_value()
                         .get<double>();
-    RCLCPP_INFO_STREAM(Logger, "Got test_duration =" << TEST_DURATION);
+    RCLCPP_INFO_STREAM(Logger, "Got test_duration = " << TEST_DURATION);
   }
 
   ~MyTestsFixture() {}
@@ -63,8 +63,8 @@ class MyTestsFixture {
 /* In this test case, the node under test (aka Auxiliary test node)
    is a service server, which got launched by the launcher.
 
-   We will ceate a service client as part of the node performing the
-   test (aka Integration test node).  And the test simply checks if
+   We will create a service client as part of the node performing the
+   test (aka Integration test node). The test simply checks if
    the service is available within the duration of the test. */
 
 TEST_CASE_METHOD(MyTestsFixture, "test service server", "[service]") {
@@ -79,21 +79,21 @@ TEST_CASE_METHOD(MyTestsFixture, "test service server", "[service]") {
    * 5.) Finally do the actual test:
    */
   rclcpp::Time start_time =
-      rclcpp::Clock().now();  // reads /clock, if "use_sim_time" is true
+      rclcpp::Clock().now();  // Reads /clock, if "use_sim_time" is true
   bool service_found = false;
   rclcpp::Duration duration = 0s;
   RCLCPP_INFO_STREAM(Logger, "Performing Test...");
-  auto timeout = std::chrono::milliseconds((int)(TEST_DURATION * 1000));
+  auto timeout = std::chrono::milliseconds(static_cast<int>(TEST_DURATION * 1000));
 
-  if (client->wait_for_service(timeout)) {  // blocking
+  if (client->wait_for_service(timeout)) {  // Blocking
     duration = (rclcpp::Clock().now() - start_time);
     service_found = true;
   }
 
   RCLCPP_INFO_STREAM(Logger,
                      "duration = " << duration.seconds()
-                                   << " service_found=" << service_found);
-  CHECK(service_found);  // Test assertions - check that the servie was found
+                                   << " service_found = " << service_found);
+  CHECK(service_found);  // Test assertions - check that the service was found
 }
 
 ////////////////////////////////////////////////
@@ -103,9 +103,9 @@ TEST_CASE_METHOD(MyTestsFixture, "test service server", "[service]") {
 /* In this test case, the node under test (aka Auxiliary test node)
    is a topic talker, which got launched by the launcher.
 
-   We will ceate a topic listener as part of the node performing the
-   test (aka Integration test node).  And the test simply checks if
-   the topic is recieved within the duration of the test. */
+   We will create a topic listener as part of the node performing the
+   test (aka Integration test node). The test simply checks if
+   the topic is received within the duration of the test. */
 
 TEST_CASE_METHOD(MyTestsFixture, "test topic talker", "[topic]") {
   /**
@@ -115,9 +115,9 @@ TEST_CASE_METHOD(MyTestsFixture, "test topic talker", "[topic]") {
 
   // Define a callback that captures the additional parameter
   struct ListenerCallback {
-    ListenerCallback(bool &gotTopic) : gotTopic_(gotTopic) {}
+    explicit ListenerCallback(bool &gotTopic) : gotTopic_(gotTopic) {}
     void operator()(const String msg) const {
-      RCLCPP_INFO_STREAM(Logger, "I heard:" << msg.data.c_str());
+      RCLCPP_INFO_STREAM(Logger, "I heard: " << msg.data.c_str());
       gotTopic_ = true;
     }
     bool &gotTopic_;
@@ -130,12 +130,13 @@ TEST_CASE_METHOD(MyTestsFixture, "test topic talker", "[topic]") {
   /**
    * 5.) Finally do the actual test:
    */
-  rclcpp::Rate rate(10.0);  // 10hz checks
+  rclcpp::Rate rate(10.0);  // 10Hz checks
   auto start_time = rclcpp::Clock().now();
   auto duration = rclcpp::Clock().now() - start_time;
   auto timeout = rclcpp::Duration::from_seconds(TEST_DURATION);
-  RCLCPP_INFO_STREAM(Logger, "duration = " << duration.seconds()
-                                           << " timeout=" << timeout.seconds());
+  RCLCPP_INFO_STREAM(
+      Logger, "duration = " << duration.seconds()
+                            << " timeout = " << timeout.seconds());
 
   while (!got_topic && (duration < timeout)) {
     rclcpp::spin_some(testerNode);
@@ -143,7 +144,10 @@ TEST_CASE_METHOD(MyTestsFixture, "test topic talker", "[topic]") {
     duration = (rclcpp::Clock().now() - start_time);
   }
 
-  RCLCPP_INFO_STREAM(Logger, "duration = " << duration.seconds()
-                                           << " got_topic=" << got_topic);
+  RCLCPP_INFO_STREAM(
+      Logger, "duration = " << duration.seconds()
+                            << " got_topic = " << got_topic);
   CHECK(got_topic);  // Test assertions - check that the topic was received
 }
+
+
