@@ -38,7 +38,7 @@ ros2 run beginner_tutorials listener
 In order to run the publisher and subscriber node together using a launch file, the following command can be run on the terminal. It accepts an argument `publish_frequency` whose value can be initialized by the user.
 
 ```bash
-ros2 launch beginner_tutorials launch.py publish_frequency:=1000
+ros2 launch beginner_tutorials talkernode.launch.py publish_frequency:=1000
 ```
 
 ### Calling the Service
@@ -49,4 +49,51 @@ A service has been added to the talker node that can change the output string of
 ros2 service call /change_string beginner_tutorials/srv/ChangeStr "{new_string: My Custom Input}"
 ```
 
-### 
+### TF Frames
+
+The talker node in this package publishes a static tf transform between 2 frames, `world` and `talk`. To run the publisher, run
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+# Run the publisher in terminal
+ros2 run beginner_tutorials talker
+```
+To view the tf transform, run the following commands in a separate terminal
+```bash
+ # In a new terminal window, echo the topic that broadcasts the static frame:
+ros2 topic echo /tf_static
+# In a new terminal window, get more information about the frames
+ros2 run tf2_tools view_frames
+```
+
+### ROS2 Bag Functionality
+
+This package supports recording and playback of ros2 bags. The launch file has been modified to support ros2 bag recording. To record use the `ros2_bag_start` parameter (True/False).
+
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+# Run the launch file in terminal with the ros2_bag_start parameter as true
+ros2 launch beginner_tutorials talkernode.launch.py ros2_bag_start:=True
+```
+The above ros2 bag is called `rosbag` and can be found in the workspace directory where the command was run.
+To inspect and playback the ros2 bag.
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+# Inspect the ros2 bag
+ros2 bag info rosbag
+# Play back the contents of the ros2 bag
+ros2 bag play rosbag
+```
+To check the working, in a seperate terminal run
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
+# Run the listener in terminal
+ros2 run beginner_tutorials listener
+
