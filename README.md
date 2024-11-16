@@ -67,6 +67,17 @@ ros2 topic echo /tf_static
 ros2 run tf2_tools view_frames
 ```
 
+### Integration Tests using Catch2
+To check the results of the integration test, run the following commands. In a new terminal
+```bash
+# Source the package
+source install/setup.bash
+# Run the test
+colcon test --packages-select beginner_tutorials
+# Display the output
+cat log/latest_test/integration_test/stdout_stderr.log
+```
+
 ### ROS2 Bag Functionality
 
 This package supports recording and playback of ros2 bags. The launch file has been modified to support ros2 bag recording. To record use the `ros2_bag_start` parameter (True/False).
