@@ -1,7 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.actions import ExecuteProcess
-from launch.actions import RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, RegisterEventHandler
 from launch.actions import LogInfo
 from launch.substitutions import TextSubstitution
 from launch.substitutions import LaunchConfiguration
@@ -31,7 +29,7 @@ def generate_launch_description():
                 ros2_bag_start
             ])
         ),
-        cmd=['ros2', 'bag', 'record', '-o', 'talkerbag', '-a'],
+        cmd=['ros2', 'bag', 'record', '-o', 'rosbag', '-a'],
         output='screen'
     )
 
